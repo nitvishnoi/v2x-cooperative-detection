@@ -1,0 +1,66 @@
+# Local copy of msig_preprocessing.yaml, pointed at the real, locally
+# extracted dataset root instead of the placeholder 'data/usyd-v2x-mini'.
+# Used only to generate train_gt_infos.pkl / test_gt_infos.pkl via
+# opencood/tools/msig_dataset_preprocessing.py. See msig_compat/dataset_patch.py
+# for the label-format and train/test-split patches this run depends on.
+name: misg_pillar_early
+
+dataset:
+  data_root: '/home/nitin/Nitin/LaneDetection/v2x-cooperative-detection/data/mixed-signals'
+  flag_train: True
+  flag_verbose: False
+  flag_pad_agent_indicator: True
+
+  yaml_parser: "load_point_pillar_params"
+
+  fusion:
+    core_method: MSigEarlyFusion
+
+  num_classes: &num_classes 3
+  name_classes: &name_classes ['car', 'bike', 'pedestrian']
+  num_point_features: &num_point_features 5  # [x, y, z, intensity]
+
+train_params:
+  batch_size: &batch_size 1  # 4
+  batch_size_per_gpu: 1  # distributed training
+  epoches: 20
+  eval_freq: 1
+  save_freq: 1
+
+preprocess:
+  core_method: &preprocessor_name 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [0.1, 0.1, 7.0]
+    max_points_per_voxel: 32
+    max_voxel_train: 35000
+    max_voxel_test: 70000
+  cav_lidar_range: &cav_lidar [-51.2, -51.2, -6, 51.2, 51.2, 1]
+
+postprocess:
+  core_method: 'VoxelPostprocessorMulti'
+  num_classes: *num_classes
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    anchor_lwh: [[5.13, 2.12, 1.84], [1.76, 0.6, 1.73], [0.8, 0.6, 1.73]]  # car (ours), bike (kitti), ped (kitti)
+    r: [0, 90]
+    num_per_position: &num_per_position 2
+  target_args:
+    pos_threshold: 0.5  # to id positive anchor
+    neg_threshold: 0.35  # to id negative anchor
+  score_threshold: [0.3, 0.3, 0.3]  # car, bike, ped
+  order: 'hwl'
+  max_num: 100 # maximum number of objects in a single frame.
+  nms_thresh: [0.15, 0.15, 0.15]  # car, bike, ped
+
+model:
+  core_method: point_pillar_multi
+  args:
+    voxel_size: *voxel_size
+    lidar_range: *cav_lidar
+    anchor_number: *num_per_position
+    num_classes: *num_classes
+    num_point_features: *num_point_features
+    preprocessor_name: *preprocessor_name
+
+    point_pillar_scatter:
+      num_features: 64

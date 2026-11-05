@@ -1,0 +1,151 @@
+name: misg_pillar_v2xvit
+
+dataset:
+  data_root: 'data/usyd-v2x-mini'
+  flag_train: False
+  flag_verbose: False
+  flag_pad_agent_indicator: False
+  path_gt_infos:
+    train: data/usyd-v2x-mini/train_gt_infos.pkl
+    test: data/usyd-v2x-mini/test_gt_infos.pkl
+
+  yaml_parser: "load_point_pillar_params"
+
+  fusion:
+    core_method: MSigIntermediateFusion
+
+  num_classes: &num_classes 3
+  name_classes: &name_classes ['car', 'bike', 'pedestrian']
+  num_point_features: &num_point_features 4  # [x, y, z, intensity]
+
+train_params:
+  batch_size: &batch_size 1
+  batch_size_per_gpu: 1  # distributed training
+  epoches: 30
+  eval_freq: 1
+  save_freq: 1
+
+preprocess:
+  core_method: &preprocessor_name 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [0.2, 0.2, 7]
+    max_points_per_voxel: 32
+    max_voxel_train: 32000
+    max_voxel_test: 70000
+  # lidar range for each individual cav.
+  cav_lidar_range: &cav_lidar [-51.2, -51.2, -6, 51.2, 51.2, 1]
+
+postprocess:
+  core_method: 'VoxelPostprocessorMulti'
+  num_classes: *num_classes
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    anchor_lwh: [[5.13, 2.12, 1.84], [1.76, 0.6, 1.73], [0.8, 0.6, 1.73]]  # car (ours), bike (kitti), ped (kitti)
+    r: [0, 90]
+    num_per_position: &num_per_position 2
+    feature_stride: 4
+
+  target_args:
+    pos_threshold: 0.5  # to id positive anchor
+    neg_threshold: 0.35  # to id negative anchor
+  
+  score_threshold: [0.2, 0.2, 0.2]  # car, bike, ped
+  
+  order: 'hwl'
+  
+  max_num: 100 # maximum number of objects in a single frame. 
+  # use this number to make sure different frames has the same dimension in the same batch
+  
+  nms_thresh: [0.15, 0.15, 0.15]  # car, bike, ped
+
+model:
+  core_method: point_pillar_transformer
+  args:
+    voxel_size: *voxel_size
+    lidar_range: *cav_lidar
+    anchor_number: *num_per_position
+    num_classes: *num_classes
+    num_point_features: *num_point_features
+    preprocessor_name: *preprocessor_name
+    max_cav: 5
+    compression: 0 # compression rate
+    backbone_fix: false
+
+    pillar_vfe:
+      use_norm: true
+      with_distance: false
+      use_absolute_xyz: true
+      num_filters: [64]
+    point_pillar_scatter:
+      num_features: 64
+
+    base_bev_backbone:
+      layer_nums: [3, 5, 8]
+      layer_strides: [2, 2, 2]
+      num_filters: [64, 128, 256]
+      upsample_strides: [1, 2, 4]
+      num_upsample_filter: [128, 128, 128]
+    shrink_header:
+      kernal_size: [3]
+      stride: [2]
+      padding: [1]
+      dim: [256]
+      input_dim: 384 # 128 * 3
+
+    transformer:
+      encoder: &encoder
+        # number of fusion blocks per encoder layer
+        num_blocks: 1
+        # number of encoder layers
+        depth: 3
+        use_roi_mask: true
+        use_RTE: &use_RTE true
+        RTE_ratio: &RTE_ratio 2 # 2 means the dt has 100ms interval while 1 means 50 ms interval
+        # agent-wise attention
+        cav_att_config: &cav_att_config
+          dim: 256
+          use_hetero: true
+          use_RTE: *use_RTE
+          RTE_ratio: *RTE_ratio
+          heads: 8
+          dim_head: 32
+          dropout: 0.3
+        # spatial-wise attention
+        pwindow_att_config: &pwindow_att_config
+          dim: 256
+          heads: [16, 8, 4]
+          dim_head: [16, 32, 64]
+          dropout: 0.3
+          window_size: [4, 8, 16]
+          relative_pos_embedding: true
+          fusion_method: 'split_attn'
+        # feedforward condition
+        feed_forward: &feed_forward
+          mlp_dim: 256
+          dropout: 0.3
+        sttf: &sttf
+          voxel_size: *voxel_size
+          downsample_rate: 4
+
+      # add decoder later
+
+loss:
+  core_method: point_pillar_loss_multi
+  args:
+    cls_weight: 1.0
+    reg: 2.0
+    num_classes: *num_classes
+    name_classes: *name_classes
+
+optimizer:
+  core_method: Adam
+  lr: 0.001
+  args:
+    eps: 1e-10
+    weight_decay: 1e-4
+
+lr_scheduler:
+  core_method: multistep #step, multistep and Exponential support
+  gamma: 0.1
+  step_size: [15, 50]
+

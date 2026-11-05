@@ -1,0 +1,167 @@
+data_root: /home/nitin/Nitin/LaneDetection/v2x-cooperative-detection/data/mixed-signals
+debug_model: false
+flag_pad_agent_indicator: false
+flag_train: true
+flag_verbose: false
+fusion:
+  core_method: MSigIntermediateFusion
+loss:
+  args:
+    cls_weight: 1.0
+    name_classes: &id001
+    - car
+    - bike
+    - pedestrian
+    num_classes: 3
+    reg: 2.0
+  core_method: point_pillar_loss_multi
+lr_scheduler:
+  core_method: multistep
+  gamma: 0.3
+  step_size:
+  - 50
+  - 80
+model:
+  args:
+    anchor_number: 2
+    base_bev_backbone:
+      compression: 0
+      layer_nums:
+      - 3
+      - 5
+      - 8
+      layer_strides:
+      - 2
+      - 2
+      - 2
+      num_filters:
+      - 64
+      - 128
+      - 256
+      num_upsample_filter:
+      - 128
+      - 128
+      - 128
+      upsample_strides:
+      - 1
+      - 2
+      - 4
+      use_freezed_rsu_downsampled_feat_maps: false
+    lidar_range: &id002
+    - -51.2
+    - -51.2
+    - -6
+    - 51.2
+    - 51.2
+    - 1
+    num_classes: 3
+    num_point_features: 4
+    pillar_vfe:
+      num_filters:
+      - 64
+      use_absolute_xyz: true
+      use_norm: true
+      with_distance: false
+    point_pillar_scatter:
+      grid_size: !!python/object/apply:numpy.core.multiarray._reconstruct
+        args:
+        - !!python/name:numpy.ndarray ''
+        - !!python/tuple
+          - 0
+        - !!binary |
+          Yg==
+        state: !!python/tuple
+        - 1
+        - !!python/tuple
+          - 3
+        - !!python/object/apply:numpy.dtype
+          args:
+          - i8
+          - false
+          - true
+          state: !!python/tuple
+          - 3
+          - <
+          - null
+          - null
+          - null
+          - -1
+          - -1
+          - 0
+        - false
+        - !!binary |
+          AAIAAAAAAAAAAgAAAAAAAAEAAAAAAAAA
+      num_features: 64
+    preprocessor_name: SpVoxelPreprocessor
+    voxel_size: &id003
+    - 0.2
+    - 0.2
+    - 7
+  core_method: point_pillar_intermediate
+name: msig_final_model
+name_classes: *id001
+num_classes: 3
+num_point_features: 4
+optimizer:
+  args:
+    eps: 1.0e-10
+    weight_decay: 0.0001
+  core_method: Adam
+  lr: 0.0005
+path_gt_infos:
+  test: /home/nitin/Nitin/LaneDetection/v2x-cooperative-detection/data/mixed-signals/test_gt_infos.pkl
+  train: /home/nitin/Nitin/LaneDetection/v2x-cooperative-detection/data/mixed-signals/train_gt_infos.pkl
+postprocess:
+  anchor_args:
+    D: 1
+    H: 512
+    W: 512
+    anchor_lwh:
+    - - 5.13
+      - 2.12
+      - 1.84
+    - - 1.76
+      - 0.6
+      - 1.73
+    - - 0.8
+      - 0.6
+      - 1.73
+    cav_lidar_range: *id002
+    num_per_position: 2
+    r:
+    - 0
+    - 90
+    vd: 7
+    vh: 0.2
+    vw: 0.2
+  core_method: VoxelPostprocessorMulti
+  max_num: 100
+  nms_thresh:
+  - 0.15
+  - 0.15
+  - 0.15
+  num_classes: 3
+  order: hwl
+  score_threshold:
+  - 0.2
+  - 0.2
+  - 0.2
+  target_args:
+    neg_threshold: 0.35
+    pos_threshold: 0.5
+preprocess:
+  args:
+    max_points_per_voxel: 32
+    max_voxel_test: 70000
+    max_voxel_train: 32000
+    num_point_features: 4
+    voxel_size: *id003
+  cav_lidar_range: *id002
+  core_method: SpVoxelPreprocessor
+train_params:
+  batch_size: 1
+  batch_size_per_gpu: 1
+  epoches: 100
+  eval_freq: 1
+  save_freq: 1
+yaml_parser: load_point_pillar_params

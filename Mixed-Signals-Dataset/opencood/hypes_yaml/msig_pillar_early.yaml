@@ -1,0 +1,99 @@
+name: misg_pillar_early
+
+dataset:
+  data_root: 'data/usyd-v2x-mini'
+  flag_train: True
+  flag_verbose: False
+  flag_pad_agent_indicator: False
+  path_gt_infos:
+    train: data/usyd-v2x-mini/train_gt_infos.pkl
+    test: data/usyd-v2x-mini/test_gt_infos.pkl
+
+  yaml_parser: "load_point_pillar_params"
+
+  fusion:
+    core_method: MSigEarlyFusion
+
+  num_classes: &num_classes 3
+  name_classes: &name_classes ['car', 'bike', 'pedestrian']
+  num_point_features: &num_point_features 4  # [x, y, z, intensity]
+
+train_params:
+  batch_size: &batch_size 1  # 4
+  batch_size_per_gpu: 1  # distributed training
+  epoches: 20
+  eval_freq: 1
+  save_freq: 1
+
+preprocess:
+  core_method: &preprocessor_name 'SpVoxelPreprocessor'
+  args:
+    voxel_size: &voxel_size [0.1, 0.1, 7.0]
+    max_points_per_voxel: 32
+    max_voxel_train: 35000
+    max_voxel_test: 70000
+  cav_lidar_range: &cav_lidar [-51.2, -51.2, -6, 51.2, 51.2, 1]
+
+postprocess:
+  core_method: 'VoxelPostprocessorMulti'
+  num_classes: *num_classes
+  anchor_args:
+    cav_lidar_range: *cav_lidar
+    anchor_lwh: [[5.13, 2.12, 1.84], [1.76, 0.6, 1.73], [0.8, 0.6, 1.73]]  # car (ours), bike (kitti), ped (kitti)
+    r: [0, 90]
+    num_per_position: &num_per_position 2
+  target_args:
+    pos_threshold: 0.5  # to id positive anchor
+    neg_threshold: 0.35  # to id negative anchor
+  score_threshold: [0.3, 0.3, 0.3]  # car, bike, ped
+  order: 'hwl'
+  max_num: 100 # maximum number of objects in a single frame. 
+  nms_thresh: [0.15, 0.15, 0.15]  # car, bike, ped
+
+model:
+  core_method: point_pillar_multi
+  args:
+    voxel_size: *voxel_size
+    lidar_range: *cav_lidar
+    anchor_number: *num_per_position
+    num_classes: *num_classes
+    num_point_features: *num_point_features
+    preprocessor_name: *preprocessor_name
+
+    pillar_vfe:
+      use_norm: true
+      with_distance: false
+      use_absolute_xyz: true
+      num_filters: [64]
+    
+    point_pillar_scatter:
+      num_features: 64
+
+    base_bev_backbone:
+      layer_nums: [3, 5, 8]
+      layer_strides: [2, 2, 2]
+      num_filters: [64, 128, 256]
+      upsample_strides: [1, 2, 4]
+      num_upsample_filter: [128, 128, 128]
+
+loss:
+  core_method: point_pillar_loss_multi
+  args:
+    cls_weight: 1.0
+    reg: 2.0
+    num_classes: *num_classes
+    name_classes: *name_classes
+
+optimizer:
+  core_method: Adam
+  lr: 0.002
+  args:
+    eps: 1e-10
+    weight_decay: 1e-4
+
+lr_scheduler:
+  core_method: exponential
+  gamma: 0.9
+  # step_size: [10, 15]
+
+

@@ -1,0 +1,24 @@
+# dataset (downloaded separately, see ARCHITECTURE.md)
+data/
+
+# python environment
+.venv/
+__pycache__/
+*.pyc
+
+# regenerated build artifacts
+Mixed-Signals-Dataset/build/
+Mixed-Signals-Dataset/*.egg-info/
+mixed-signals-devkit/*.egg-info/
+
+# generated Codabench submission archives - rebuild with
+# msig_compat/export_submission.py, don't commit the zips themselves
+submission.zip
+submission_*.zip
+
+# agent tooling config, not part of the submission
+.claude/
+
+# local drafts / scratch archives, not part of the repo
+paper/
+project_files.zip
