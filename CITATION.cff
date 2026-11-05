@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this code, checkpoint, or results, please cite it as below, and cite the Mixed Signals dataset."
+title: "Cooperative Vehicle-to-Everything Point Cloud Perception: Training, Evaluation, and Export Code for the Mixed Signals Dataset"
+type: software
+authors:
+  - family-names: Vishnoi
+    given-names: Nitin
+version: 1.0.0
+date-released: 2026-11-06
+license: CC-BY-NC-SA-4.0
+repository-code: "https://github.com/nitvishnoi/v2x-cooperative-detection"
+keywords:
+  - V2X
+  - cooperative perception
+  - 3D object detection
+  - LiDAR
+  - point cloud
+  - PointPillars
+  - OpenCOOD
+  - Mixed Signals dataset
+references:
+  - type: article
+    title: "Mixed Signals: A Diverse Point Cloud Dataset for Heterogeneous LiDAR V2X Collaboration"
+    authors:
+      - family-names: Luo
+        given-names: Katie Z.
+      - name: "et al."
+    conference:
+      name: "IEEE/CVF International Conference on Computer Vision (ICCV)"
+    year: 2025
+    identifiers:
+      - type: other
+        value: "arXiv:2502.14156"
