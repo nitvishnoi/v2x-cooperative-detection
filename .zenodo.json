@@ -1,0 +1,39 @@
+{
+  "title": "Cooperative Vehicle-to-Everything Point Cloud Perception: Training, Evaluation, and Export Code for the Mixed Signals Dataset",
+  "upload_type": "software",
+  "version": "1.0.0",
+  "creators": [
+    {
+      "name": "Vishnoi, Nitin",
+      "orcid": "0009-0000-5871-9307"
+    }
+  ],
+  "description": "<p>Code, configurations, trained checkpoint, and evaluation tools for V2X cooperative 3D object detection (car, bike, pedestrian) on the Mixed Signals dataset. The detector is an OpenCOOD-based PointPillars model with intermediate attention fusion across roadside and connected-vehicle LiDARs.</p><p>Included: a compatibility layer for the current dataset release, a corrected BEV-IoU evaluator, the epoch-55 reference checkpoint (84.5% mAP on the held-out development split), fusion-strategy baselines, pose-sensitivity, score-calibration and node-composition analyses with block-bootstrap confidence intervals, and the export script for the challenge's test split. The scored test-split prediction archives are attached to the repository's final-predictions release.</p><p>Licensing: the original code is MIT; the bundled starter kit keeps its academic research licence; the checkpoint and prediction archives are derived from the Mixed Signals dataset and follow its CC BY-NC-SA 4.0 licence. See LICENSE.md. The archive as a whole is therefore distributed under CC BY-NC-SA 4.0.</p>",
+  "license": "cc-by-nc-sa-4.0",
+  "access_right": "open",
+  "keywords": [
+    "V2X",
+    "cooperative perception",
+    "3D object detection",
+    "LiDAR",
+    "point cloud",
+    "intermediate fusion",
+    "PointPillars",
+    "OpenCOOD",
+    "Mixed Signals dataset",
+    "autonomous driving",
+    "reproducibility"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://huggingface.co/datasets/sberrio/Mixed-Signals-V2X",
+      "relation": "references",
+      "resource_type": "dataset"
+    },
+    {
+      "identifier": "arXiv:2502.14156",
+      "relation": "references",
+      "resource_type": "publication-article"
+    }
+  ]
+}
